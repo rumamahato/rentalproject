@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f6f9;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* ================= MAIN ================= */
+main {
+    flex: 1;
+    padding: 30px 0;
+}
+
+.cars-container {
+    width: 90%;
+    margin: auto;
+}
+
+.add-btn {
+    display: inline-block;
+    padding: 8px 14px;
+    background: #2c7be5;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-bottom: 20px;
+}
+
+.add-btn:hover {
+    background: #1a5ed9;
+}
+
+/* ================= CARD DESIGN ================= */
+.car-card {
+    display: flex;
+    background: white;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    align-items: center;
+    transition: 0.3s;
+}
+
+.car-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+/* IMAGE BOX */
+.image-box {
+    width: 250px;
+    height: 170px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid #e0e0e0;
+}
+
+.image-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-image {
+    color: #888;
+    font-size: 14px;
+}
+
+/* DETAILS */
+.car-details {
+    margin-left: 25px;
+    flex: 1;
+}
+
+.car-details h2 {
+    color: #2c7be5;
+    margin-bottom: 10px;
+}
+
+.specs {
+    color: #333;
+    margin-bottom: 15px;
+}
+
+/* BUTTONS */
+.actions {
+    margin-top: 10px;
+}
+
+.btn-update {
+    background: #2c7be5;
+    color: white;
+    padding: 6px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.btn-delete {
+    background: #e63757;
+    color: white;
+    padding: 6px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-right: 8px;
+}
+
+.btn-book {
+    background: #28a745;
+    color: white;
+    padding: 6px 12px;
+    text-decoration: none;
+    border-radius: 4px;
+}
+
+.btn-update:hover {
+    background: #1a5ed9;
+}
+
+.btn-delete:hover {
+    background: #c82333;
+}
+
+.btn-book:hover {
+    background: #218838;
+}
+
+/* ================= FOOTER ================= */
+footer {
+    background-color: #1f3c88;
+    color: white;
+    text-align: center;
+    padding: 15px 0;
+    margin-top: auto;
+}
+</style>
+
+
+<div class="cars-container">
+    <a class="add-btn" href="{% url 'car' %}">+ Add New Car</a>
+
+    {% for car in cars %}
+    <div class="car-card">
+
+        <!-- LEFT IMAGE BOX -->
+        <div class="image-box">
+            {% if car.image %}
+                <img src="{{ car.image.url }}" alt="{{ car.name }}">
+            {% else %}
+                <div class="no-image">No Image</div>
+            {% endif %}
+        </div>
+
+        <!-- RIGHT DETAILS -->
+        <div class="car-details">
+            <h2>{{ car.brand|upper }} - {{ car.name }}</h2>
+
+            <p class="specs">
+                Price: ${{ car.price }} |
+                Color: {{ car.color }} |
+                Transmission: {{ car.transmission }} |
+                Type: {{ car.car_type }} |
+                Year: {{ car.model_year }}
+            </p>
+
+            <div class="actions">
+                <a href="{% url 'update_car' car.id %}" class="btn-update">Update</a>
+                <a href="{% url 'delete_car' car.id %}" class="btn-delete">Delete</a>
+                <a href="{% url 'book_car' car.id %}" class="btn-book">Booking</a>
+            </div>
+        </div>
+
+    </div>
+    {% empty %}
+        <p>No cars available.</p>
+    {% endfor %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Book Car{% endblock %}
+
+{% block content %}
+
+<style>
+body {
+    background-color: #f4f6f9;
+}
+
+/* Car Info Card */
+.booking-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.booking-card img {
+    width: 220px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.car-info h3 {
+    margin: 0;
+    color: #1f4e79;
+}
+
+.car-info p {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* Booking Form */
+.booking-form {
+    margin-top: 40px;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.booking-form input {
+    padding: 8px 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.book-btn {
+    background: black;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.book-btn:hover {
+    background: #333;
+}
+</style>
+
+<div class="container mt-4">
+
+    <!-- Car Details Section -->
+    <div class="booking-card">
+        <img src="{{ car.image.url }}" alt="{{ car.name }}">
+
+        <div class="car-info">
+            <h3>{{ car.brand }} - {{ car.name }}</h3>
+            <p>{{ car.brand }} {{ car.name }}</p>
+            <hr>
+            <p>
+                Price : ${{ car.price }} |
+                Color : {{ car.color }} |
+                Transmission : {{ car.transmission }} |
+                Type : {{ car.car_type }} |
+                Year : {{ car.model_year }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Booking Form -->
+    <form method="POST" class="booking-form">
+        {% csrf_token %}
+
+        <div>
+            <label>From Date:</label><br>
+            <input type="date" name="start_date" required>
+        </div>
+
+        <div>
+            <label>To Date:</label><br>
+            <input type="date" name="end_date" required>
+        </div>
+
+        <div style="margin-top:22px;">
+            <button type="submit" class="book-btn">Book Car</button>
+        </div>
+
+    </form>
+
+</div>
+
+
+
+{% endblock %}

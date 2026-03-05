@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}{% if car %}Update Car{% else %}Add Car{% endif %}{% endblock %}
+
+{% block content %}
+
+<style>
+    body {
+        background-color: #f4f6f9;
+    }
+
+    .form-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 40px 0;
+    }
+
+    .car-form {
+        background: #ffffff;
+        width: 100%;
+        max-width: 500px;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    }
+
+    .car-form h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #2c7be5;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group.center {
+        text-align: center;
+    }
+
+    .car-form label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+
+    .car-form input,
+    .car-form select,
+    .car-form textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        outline: none;
+        font-size: 14px;
+        transition: 0.3s;
+    }
+
+    .car-form input:focus,
+    .car-form select:focus,
+    .car-form textarea:focus {
+        border-color: #2c7be5;
+        box-shadow: 0 0 5px rgba(44,123,229,0.3);
+    }
+
+    .car-form textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .submit-btn {
+        width: 100%;
+        padding: 10px;
+        background: #2c7be5;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 15px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .submit-btn:hover {
+        background: #1a5ed9;
+    }
+
+    .current-image img, #preview-image {
+        width: 150px;
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+
+    .error-message {
+        color: red;
+        font-size: 13px;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="form-container">
+    <form method="POST" enctype="multipart/form-data" class="car-form">
+        {% csrf_token %}
+
+        <h2>{% if car %}Update Car{% else %}Add New Car{% endif %}</h2>
+
+        <!-- Show current image for update -->
+        {% if car and car.image %}
+        <div class="form-group center current-image">
+            <p>Current Image:</p>
+            <img src="{{ car.image.url }}" alt="Car Image">
+        </div>
+        {% endif %}
+
+        <!-- Image upload -->
+        <div class="form-group center">
+            <label for="id_image">Upload Image</label>
+            <input type="file" name="image" id="id_image" accept="image/*" onchange="previewImage(event)">
+            <img id="preview-image" style="display:none;" alt="Preview">
+        </div>
+
+        <!-- Brand -->
+        <div class="form-group">
+            <label for="brand">Brand</label>
+            <input type="text" id="brand" name="brand" placeholder="Brand"
+                   value="{{ car.brand|default:'' }}" required>
+            {% if form.brand.errors %}
+                <div class="error-message">{{ form.brand.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Name -->
+        <div class="form-group">
+            <label for="name">Car Name</label>
+            <input type="text" id="name" name="name" placeholder="Car Name"
+                   value="{{ car.name|default:'' }}" required>
+            {% if form.name.errors %}
+                <div class="error-message">{{ form.name.errors }}</div>
+            {% endif %}
+        </div>
+
+        <!-- Car Type -->
+        <div class="form-group">
+            <label for="car_type">Car Type</label>
+            <select id="car_type" name="car_type" required>
+                <option value="">Select Car Type</option>
+                <option value="Petrol" {% if car.car_type == "Petrol" %}selected{% endif %}>Petrol</option>
+                <option value="Diesel" {% if car.car_type == "Diesel" %}selected{% endif %}>Diesel</option>
+                <option value="Hybrid" {% if car.car_type == "Hybrid" %}selected{% endif %}>Hybrid</option>
+                <option value="Electric" {% if car.car_type == "Electric" %}selected{% endif %}>Electric</option>
+            </select>
+        </div>
+
+        <!-- Transmission -->
+        <div class="form-group">
+            <label for="transmission">Transmission</label>
+            <select id="transmission" name="transmission" required>
+                <option value="">Select Transmission</option>
+                <option value="Manual" {% if car.transmission == "Manual" %}selected{% endif %}>Manual</option>
+                <option value="Automatic" {% if car.transmission == "Automatic" %}selected{% endif %}>Automatic</option>
+            </select>
+        </div>
+
+        <!-- Color -->
+        <div class="form-group">
+            <label for="color">Color</label>
+            <select id="color" name="color" required>
+                <option value="">Select Color</option>
+                <option value="Black" {% if car.color == "Black" %}selected{% endif %}>Black</option>
+                <option value="White" {% if car.color == "White" %}selected{% endif %}>White</option>
+                <option value="Silver" {% if car.color == "Silver" %}selected{% endif %}>Silver</option>
+                <option value="Red" {% if car.color == "Red" %}selected{% endif %}>Red</option>
+                <option value="Blue" {% if car.color == "Blue" %}selected{% endif %}>Blue</option>
+            </select>
+        </div>
+
+        <!-- Model Year -->
+        <div class="form-group">
+            <label for="model_year">Model Year</label>
+            <input type="number" id="model_year" name="model_year" placeholder="Model Year"
+                   value="{{ car.model_year|default:'' }}" min="1900" max="2100" required>
+        </div>
+
+        <!-- Price -->
+        <div class="form-group">
+            <label for="price">Price</label>
+            <input type="number" id="price" name="price" placeholder="Price"
+                   value="{{ car.price|default:'' }}" min="0" required>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" placeholder="Description">{{ car.description|default:'' }}</textarea>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-group">
+            <button type="submit" class="submit-btn">
+                {% if car %}Update Car{% else %}Save Car{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    function previewImage(event) {
+        const preview = document.getElementById('preview-image');
+        const file = event.target.files[0];
+        if(file) {
+            preview.src = URL.createObjectURL(file);
+            preview.style.display = 'block';
+        } else {
+            preview.style.display = 'none';
+        }
+    }
+</script>
+
+{% endblock %}

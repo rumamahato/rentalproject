@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Search Cars{% endblock %}
+
+{% block content %}
+<style>
+body { background-color: #f4f6f9; }
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 30px;
+}
+.search-form select, .search-form button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+    outline: none;
+    font-size: 14px;
+}
+.search-form button {
+    background-color: #2c7be5;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+.search-form button:hover { background-color: #1a5ed9; }
+
+.cars-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.car-card {
+    display: flex;
+    gap: 20px;
+    background-color: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    align-items: center;
+}
+
+.car-card img {
+    width: 150px;
+    height: 150px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.car-details h3 {
+    margin: 0 0 5px;
+    color: #2c7be5;
+}
+
+.car-details p {
+    margin: 3px 0;
+    font-size: 14px;
+}
+</style>
+
+<h2>Search Cars</h2>
+
+<form method="GET" class="search-form">
+    <!-- Brand -->
+    <select name="brand">
+        <option value="">Select Brand</option>
+        {% for brand in brands %}
+            <option value="{{ brand }}" {% if request.GET.brand == brand %}selected{% endif %}>{{ brand }}</option>
+        {% endfor %}
+    </select>
+
+    <!-- Car Type -->
+    <select name="car_type">
+        <option value="">Select Type</option>
+        {% for t in car_types %}
+            <option value="{{ t }}" {% if request.GET.car_type == t %}selected{% endif %}>{{ t }}</option>
+        {% endfor %}
+    </select>
+
+    <!-- Color -->
+    <select name="color">
+        <option value="">Select Color</option>
+        {% for c in colors %}
+            <option value="{{ c }}" {% if request.GET.color == c %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+    </select>
+
+    <!-- Transmission -->
+    <select name="transmission">
+        <option value="">Select Transmission</option>
+        {% for tr in transmissions %}
+            <option value="{{ tr }}" {% if request.GET.transmission == tr %}selected{% endif %}>{{ tr }}</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Search Car</button>
+</form>
+
+<div class="cars-container">
+    {% comment %}Only show results if a search was made{% endcomment %}
+    {% if request.GET.brand or request.GET.car_type or request.GET.color or request.GET.transmission %}
+        {% if cars %}
+            {% for car in cars %}
+            <div class="car-card">
+                <img src="{{ car.image.url }}" alt="{{ car.name }}">
+                <div class="car-details">
+                    <h3>{{ car.brand }} - {{ car.name }}</h3>
+                    <p>{{ car.description }}</p>
+                    <p>
+                        Price: ${{ car.price }} |
+                        Color: {{ car.color }} |
+                        Transmission: {{ car.transmission }} |
+                        Type: {{ car.car_type }} |
+                        Year: {{ car.model_year }}
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No cars found matching your criteria.</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
