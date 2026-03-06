@@ -61,7 +61,11 @@ body { background-color: #f4f6f9; }
 </style>
 
 <h2>Search Cars</h2>
-
+<!-- Back Button -->
+    <a href="{% url 'home' %}" class="btn btn-secondary">
+        ⬅ Back to home
+    </a>
+    <br><br>
 <form method="GET" class="search-form">
     <!-- Brand -->
     <select name="brand">

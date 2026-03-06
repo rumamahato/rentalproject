@@ -137,6 +137,30 @@ def delete_booking(request, id):
 
 
 # --------------------------
+# Approve Booking
+# --------------------------
+@login_required
+def approve_booking(request, id):
+    booking = get_object_or_404(Booking, id=id)
+    booking.status = "Approved"
+    booking.save()
+    messages.success(request, "Booking Approved ✅")
+    return redirect("booking_success")
+
+
+# --------------------------
+# Reject Booking
+# --------------------------
+@login_required
+def reject_booking(request, id):
+    booking = get_object_or_404(Booking, id=id)
+    booking.status = "Cancelled"
+    booking.save()
+    messages.error(request, "Booking Rejected ❌")
+    return redirect("booking_success")
+
+
+# --------------------------
 # Search Cars
 # --------------------------
 @login_required(login_url='login')

@@ -17,7 +17,7 @@
         }
 
         header {
-            background: #2c7be5;
+            background: #df50b4;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
@@ -49,7 +49,7 @@
         }
 
         footer {
-            background-color: #222;
+            background-color: #241d1b;
             color: white;
             text-align: center;
             padding: 18px 0;
@@ -114,8 +114,46 @@
 </main>
 
 <!-- FOOTER -->
-<footer>
-    <p>© 2026 Rental Project | All Rights Reserved</p>
+<footer class="mt-5">
+    <div class="container py-4">
+        <div class="row text-center text-md-start">
+
+            <!-- About -->
+            <div class="col-md-4 mb-3">
+                <h5>🚗 Rental Project</h5>
+                <p>
+                    Easy and reliable car rental system. 
+                    Book your favorite vehicle anytime with secure booking.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-md-4 mb-3">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="{% url 'home' %}" class="footer-link">Home</a></li>
+                    <li><a href="{% url 'car' %}" class="footer-link">Add Car</a></li>
+                    <li><a href="{% url 'search' %}" class="footer-link">Search Car</a></li>
+                    <li><a href="{% url 'booking_success' %}" class="footer-link">My Booking</a></li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div class="col-md-4 mb-3">
+                <h5>Contact</h5>
+                <p>Email: rumamahato918@gmail.com</p>
+                <p>Phone: +977-9807868627</p>
+                <p>Bhaisepati-25,Lalitpur Nepal</p>
+            </div>
+
+        </div>
+
+        <hr style="border-color:#555">
+
+        <div class="text-center">
+            <p class="mb-0">© 2026 Rental Project develop by Ruma Mahato | All Rights Reserved</p>
+        </div>
+    </div>
 </footer>
 
 <!-- Bootstrap JS -->
