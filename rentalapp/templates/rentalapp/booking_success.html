@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block title %}My Bookings{% endblock %}
 
 {% block content %}
@@ -40,7 +42,7 @@
 
 <td>{{ booking.total_days }}</td>
 
-<td>${{ booking.total_price }}</td>
+<td>Rs. {{ booking.total_price }}</td>
 
 <td>
 
@@ -66,12 +68,24 @@ Approve
 </a>
 
 <a href="{% url 'reject_booking' booking.id %}" 
-class="btn btn-sm btn-danger">
+class="btn btn-sm btn-warning">
 Reject
 </a>
 
+<a href="{% url 'delete_booking' booking.id %}" 
+class="btn btn-sm btn-danger"
+onclick="return confirm('Delete this booking?')">
+Delete
+</a>
+
 {% else %}
--
+
+<a href="{% url 'delete_booking' booking.id %}" 
+class="btn btn-sm btn-danger"
+onclick="return confirm('Delete this booking?')">
+Delete
+</a>
+
 {% endif %}
 
 </td>
@@ -92,6 +106,62 @@ No bookings found
 
 </table>
 
+</div>
+
+<!-- ================= PAYMENT SECTION ================= -->
+
+<div class="container mt-4">
+<div class="row justify-content-center">
+<div class="col-md-6">
+<div class="card shadow p-4 text-center">
+<h4 class="mb-3">
+Total Amount: <b>Rs. {{ total_amount }}</b>
+</h4>
+{% if total_amount > 0 %}
+
+<form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
+
+<input type="hidden" name="amount" value="{{ total_amount }}">
+<input type="hidden" name="tax_amount" value="0">
+<input type="hidden" name="total_amount" value="{{ total_amount }}">
+
+<input type="hidden" name="transaction_uuid" value="{{ transaction_uuid }}">
+<input type="hidden" name="product_code" value="{{ product_code }}">
+
+<input type="hidden" name="product_service_charge" value="0">
+<input type="hidden" name="product_delivery_charge" value="0">
+
+<input type="hidden" name="success_url" value="http://127.0.0.1:8000/booking_success/">
+<input type="hidden" name="failure_url" value="http://127.0.0.1:8000/booking_success/">
+
+<input type="hidden" name="signed_field_names"
+value="total_amount,transaction_uuid,product_code">
+
+<input type="hidden" name="signature" value="{{ signature }}">
+
+<button type="submit" class="btn btn-success w-100 mt-3">
+Pay with eSewa
+</button>
+
+</form>
+
+{% else %}
+
+<p class="text-danger mt-3">
+No approved bookings available for payment
+</p>
+
+{% endif %}
+
+<p class="mt-3 text-muted">
+* You will be redirected to eSewa to complete payment.
+</p>
+
+</div>
+
+</div>
+
+</div>
 </div>
 
 {% endblock %}

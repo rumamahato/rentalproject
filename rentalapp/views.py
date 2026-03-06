@@ -6,6 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Car, Booking
 from datetime import datetime
+import uuid
+import hmac
+import hashlib
+import base64
+from django.db.models import Sum
 
 # --------------------------
 # Home Page
@@ -122,7 +127,37 @@ def book_car(request, id):
 @login_required
 def booking_success(request):
     bookings = Booking.objects.filter(user=request.user).order_by("-id")
-    return render(request, "rentalapp/booking_success.html", {"bookings": bookings})
+
+    approved_bookings = bookings.filter(status="Approved")
+
+    total_amount = approved_bookings.aggregate(total=Sum('total_price'))['total'] or 0
+
+    # UNIQUE TRANSACTION UUID
+    transaction_uuid = str(uuid.uuid4())
+
+    product_code = "EPAYTEST"
+
+    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+
+    secret_key = "8gBm/:&EnhH.1/q"
+
+    hash_object = hmac.new(
+        secret_key.encode(),
+        message.encode(),
+        hashlib.sha256
+    )
+
+    signature = base64.b64encode(hash_object.digest()).decode()
+
+    context = {
+        "bookings": bookings,
+        "total_amount": total_amount,
+        "transaction_uuid": transaction_uuid,
+        "product_code": product_code,
+        "signature": signature,
+    }
+
+    return render(request, "rentalapp/booking_success.html", context)
 
 
 # --------------------------
@@ -144,7 +179,7 @@ def approve_booking(request, id):
     booking = get_object_or_404(Booking, id=id)
     booking.status = "Approved"
     booking.save()
-    messages.success(request, "Booking Approved ✅")
+    messages.success(request, "Booking Approved")
     return redirect("booking_success")
 
 
