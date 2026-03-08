@@ -10,6 +10,7 @@ import uuid
 import hmac
 import hashlib
 import base64
+import json
 from django.db.models import Sum
 
 # --------------------------
@@ -126,15 +127,34 @@ def book_car(request, id):
 # --------------------------
 @login_required
 def booking_success(request):
+
+    if "data" in request.GET:
+        try:
+            decoded = base64.b64decode(request.GET.get("data")).decode()
+            response = json.loads(decoded)
+
+            if response.get("status") == "COMPLETE":
+                messages.success(request, "Payment Successful 🎉")
+            else:
+                messages.error(request, "Payment Failed ❌")
+
+        except Exception as e:
+            print(e)
+
     bookings = Booking.objects.filter(user=request.user).order_by("-id")
 
-    approved_bookings = bookings.filter(status="Approved")
+    # ✔ Only latest approved booking
+    approved_booking = Booking.objects.filter(
+        user=request.user,
+        status="Approved"
+    ).order_by("-id").first()
 
-    total_amount = approved_bookings.aggregate(total=Sum('total_price'))['total'] or 0
+    if approved_booking:
+        total_amount = approved_booking.total_price
+    else:
+        total_amount = 0
 
-    # UNIQUE TRANSACTION UUID
     transaction_uuid = str(uuid.uuid4())
-
     product_code = "EPAYTEST"
 
     message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
@@ -158,7 +178,6 @@ def booking_success(request):
     }
 
     return render(request, "rentalapp/booking_success.html", context)
-
 
 # --------------------------
 # Delete Booking

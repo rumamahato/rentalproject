@@ -2,7 +2,6 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.contrib.auth.decorators import login_required
 import base64, json, hashlib, hmac
-
 from .models import Transaction
 
 
