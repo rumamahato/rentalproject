@@ -1,57 +1,51 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from rentalapp.models import Car, Booking       # rentalapp models
+from .models import Transaction                 # payments models
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import HttpResponse
 import base64, json, hashlib, hmac
-from .models import Transaction
 
-
-@login_required(login_url='log_in')
+@login_required
 def success_esewa(request):
-    # 1️⃣ Get encoded data from eSewa
-    encoded_data = request.GET.get("data")
-    if not encoded_data:
-        return HttpResponse("Invalid response", status=400)
 
-    # 2️⃣ Decode Base64 → JSON
+    data = request.GET.get("data")
+
+    if not data:
+        return HttpResponse("No payment data received")
+
     try:
-        decoded_json = base64.b64decode(encoded_data).decode("utf-8")
-        payload = json.loads(decoded_json)
-    except Exception:
-        return HttpResponse("Invalid data format", status=400)
+        decoded = base64.b64decode(data).decode()
+        response = json.loads(decoded)
 
-    # 3️⃣ Verify Signature
-    try:
-        signed_fields = payload["signed_field_names"].split(",")
+        transaction_code = response.get("transaction_code")
+        status = response.get("status")
+        total_amount = response.get("total_amount")
+        transaction_uuid = response.get("transaction_uuid")
+        product_code = response.get("product_code")
 
-        message = ",".join(
-            [f"{field}={payload[field]}" for field in signed_fields]
-        )
+        if status == "COMPLETE":
 
-        secret_key = "8gBm/:&EnhH.1/q"   # eSewa TEST secret key
+            Transaction.objects.create(
+                user=request.user,
+                transaction_code=transaction_code,
+                transaction_uuid=transaction_uuid,
+                product_code=product_code,
+                total_amount=total_amount,
+                status=status
+            )
 
-        expected_signature = base64.b64encode(
-            hmac.new(
-                secret_key.encode(),
-                message.encode(),
-                hashlib.sha256
-            ).digest()
-        ).decode()
+            return render(request,"payments/success.html",{
+                "amount": total_amount
+            })
 
-        if expected_signature.rstrip("=") != payload["signature"].rstrip("="):
-            return HttpResponse("Invalid signature", status=400)
+        else:
+            return render(request,"payments/failure.html")
 
-    except KeyError as e:
-        return HttpResponse(f"Missing field: {e}", status=400)
-
-    # 4️⃣ Save Transaction (safe way)
-    txn, created = Transaction.objects.get_or_create(
-        transaction_uuid=payload["transaction_uuid"],
-        defaults={
-            "transaction_code": payload["transaction_code"],"product_code": payload["product_code"],
-            "total_amount": payload["total_amount"],"status": payload["status"],"user": request.user})
-
-    return render(request, "success_esewa.html", {"txn": txn})
+    except Exception as e:
+        return HttpResponse(str(e))
 
 
+@login_required
 def failure_esewa(request):
-    return render(request, "failure_esewa.html")
+    return render(request,"payments/failure.html")

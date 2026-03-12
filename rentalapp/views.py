@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Car, Booking
+from payments.models import Transaction
 from datetime import datetime
 import uuid
 import hmac
@@ -20,7 +21,6 @@ from django.db.models import Sum
 def home(request):
     cars = Car.objects.all().order_by("-created_at")
     return render(request, "rentalapp/home.html", {"cars": cars})
-
 
 # --------------------------
 # Add Car
@@ -39,10 +39,9 @@ def car(request):
             price=request.POST.get("price"),
             description=request.POST.get("description"),
         )
-        messages.success(request, "Car added successfully ✅")
+        messages.success(request, "Car added successfully")
         return redirect("home")
     return render(request, "rentalapp/car.html")
-
 
 # --------------------------
 # Update Car
@@ -66,7 +65,6 @@ def update_car(request, id):
         return redirect("home")
     return render(request, "rentalapp/car.html", {"car": car})
 
-
 # --------------------------
 # Delete Car
 # --------------------------
@@ -74,9 +72,8 @@ def update_car(request, id):
 def delete_car(request, id):
     car = get_object_or_404(Car, id=id)
     car.delete()
-    messages.success(request, "Car deleted successfully 🗑️")
+    messages.success(request, "Car deleted successfully")
     return redirect("home")
-
 
 # --------------------------
 # Car Detail Page
@@ -85,14 +82,12 @@ def car_detail(request, id):
     car = get_object_or_404(Car, id=id)
     return render(request, "car_detail.html", {"car": car})
 
-
 # --------------------------
-# Booking Page
+# Book Car
 # --------------------------
 @login_required
 def book_car(request, id):
     car = get_object_or_404(Car, id=id)
-
     if request.method == "POST":
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
@@ -100,11 +95,9 @@ def book_car(request, id):
         try:
             start = datetime.strptime(start_date, "%Y-%m-%d").date()
             end = datetime.strptime(end_date, "%Y-%m-%d").date()
-
             if end < start:
                 messages.error(request, "End date cannot be before start date.")
                 return redirect('book_car', id=id)
-
         except:
             messages.error(request, "Invalid date format.")
             return redirect('book_car', id=id)
@@ -115,12 +108,11 @@ def book_car(request, id):
             start_date=start,
             end_date=end
         )
-
         messages.success(request, f"{car.name} booked successfully!")
         return redirect("booking_success")
 
     return render(request, "rentalapp/my_booking.html", {"car": car})
-
+    
 
 # --------------------------
 # Booking Success Page
@@ -128,56 +120,42 @@ def book_car(request, id):
 @login_required
 def booking_success(request):
 
-    if "data" in request.GET:
-        try:
-            decoded = base64.b64decode(request.GET.get("data")).decode()
-            response = json.loads(decoded)
-
-            if response.get("status") == "COMPLETE":
-                messages.success(request, "Payment Successful 🎉")
-            else:
-                messages.error(request, "Payment Failed ❌")
-
-        except Exception as e:
-            print(e)
-
     bookings = Booking.objects.filter(user=request.user).order_by("-id")
 
-    # ✔ Only latest approved booking
-    approved_booking = Booking.objects.filter(
+    last_approved = Booking.objects.filter(
         user=request.user,
         status="Approved"
     ).order_by("-id").first()
 
-    if approved_booking:
-        total_amount = approved_booking.total_price
+    if last_approved:
+        total_amount = last_approved.total_price
     else:
         total_amount = 0
 
     transaction_uuid = str(uuid.uuid4())
     product_code = "EPAYTEST"
 
+    signed_field_names = "total_amount,transaction_uuid,product_code"
+
     message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
 
     secret_key = "8gBm/:&EnhH.1/q"
 
-    hash_object = hmac.new(
-        secret_key.encode(),
-        message.encode(),
-        hashlib.sha256
-    )
-
-    signature = base64.b64encode(hash_object.digest()).decode()
+    signature = base64.b64encode(
+        hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).digest()
+    ).decode()
 
     context = {
         "bookings": bookings,
         "total_amount": total_amount,
         "transaction_uuid": transaction_uuid,
         "product_code": product_code,
+        "signed_field_names": signed_field_names,
         "signature": signature,
     }
 
     return render(request, "rentalapp/booking_success.html", context)
+
 
 # --------------------------
 # Delete Booking
@@ -189,30 +167,35 @@ def delete_booking(request, id):
     messages.success(request, "Booking deleted successfully 🗑️")
     return redirect("booking_success")
 
-
 # --------------------------
 # Approve Booking
 # --------------------------
 @login_required
 def approve_booking(request, id):
-    booking = get_object_or_404(Booking, id=id)
-    booking.status = "Approved"
-    booking.save()
-    messages.success(request, "Booking Approved")
-    return redirect("booking_success")
 
+    booking = get_object_or_404(Booking, id=id)
+
+    if request.method == "POST":
+        booking.status = "Approved"
+        booking.save()
+        messages.success(request, "Booking Approved ✅")
+
+    return redirect("booking_success")
 
 # --------------------------
 # Reject Booking
 # --------------------------
 @login_required
 def reject_booking(request, id):
-    booking = get_object_or_404(Booking, id=id)
-    booking.status = "Cancelled"
-    booking.save()
-    messages.error(request, "Booking Rejected ❌")
-    return redirect("booking_success")
 
+    booking = get_object_or_404(Booking, id=id)
+
+    if request.method == "POST":
+        booking.status = "Cancelled"
+        booking.save()
+        messages.error(request, "Booking Rejected ❌")
+
+    return redirect("booking_success")
 
 # --------------------------
 # Search Cars
@@ -225,7 +208,6 @@ def search(request):
     transmission = request.GET.get("transmission")
 
     cars = Car.objects.all().order_by("-created_at")
-
     if brand:
         cars = cars.filter(brand__icontains=brand)
     if car_type:
@@ -235,7 +217,6 @@ def search(request):
     if transmission:
         cars = cars.filter(transmission__icontains=transmission)
 
-    # Unique brands for dropdown
     brands = Car.objects.values_list('brand', flat=True).distinct()
     car_types = ["Petrol", "Diesel", "Hybrid", "Electric"]
     colors = ["Black", "White", "Silver", "Red", "Blue"]
@@ -249,7 +230,6 @@ def search(request):
         "transmissions": transmissions,
     }
     return render(request, "rentalapp/search.html", context)
-
 
 # --------------------------
 # Login View
@@ -268,7 +248,6 @@ class LoginViewCustom(View):
             return redirect("home")
         messages.error(request, "Invalid username or password ❌")
         return render(request, "login.html", {"form": form})
-
 
 # --------------------------
 # Logout View
