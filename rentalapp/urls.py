@@ -15,7 +15,7 @@ urlpatterns = [
     path("booking/delete/<int:id>/", views.delete_booking, name="delete_booking"),
     path("approve-booking/<int:id>/", views.approve_booking, name="approve_booking"),
     path("reject-booking/<int:id>/", views.reject_booking, name="reject_booking"),
-
+    path("select_booking/<int:id>/", views.select_booking, name="select_booking"),
     
     # Authentication
     path("login/", views.LoginViewCustom.as_view(), name="login"),

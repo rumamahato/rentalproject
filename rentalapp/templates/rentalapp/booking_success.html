@@ -4,7 +4,6 @@
 {% block title %}My Bookings{% endblock %}
 
 {% block content %}
-
 <div class="container mt-4">
 
 <button onclick="history.back()" class="btn btn-secondary mb-3">
@@ -21,7 +20,7 @@
 <th>From</th>
 <th>To</th>
 <th>Days</th>
-<th>Total Price</th>
+<th>Price</th>
 <th>Status</th>
 <th>Action</th>
 </tr>
@@ -30,6 +29,7 @@
 <tbody>
 
 {% for booking in bookings %}
+
 <tr>
 
 <td>{{ booking.vehicle.brand }} - {{ booking.vehicle.name }}</td>
@@ -40,49 +40,54 @@
 
 <td>{{ booking.total_days }}</td>
 
-<td>Rs. {{ booking.total_price }}</td>
+<td>Rs {{ booking.total_price }}</td>
 
 <td>
 
 {% if booking.status == "Approved" %}
-<span class="badge bg-success">APPROVED</span>
+<span class="badge bg-success">Approved</span>
 
 {% elif booking.status == "Pending" %}
-<span class="badge bg-warning text-dark">PENDING</span>
+<span class="badge bg-warning text-dark">Pending</span>
 
 {% else %}
-<span class="badge bg-danger">CANCELLED</span>
+<span class="badge bg-danger">Cancelled</span>
+
 {% endif %}
 
 </td>
 
 <td>
 
+{% if booking.status == "Approved" %}
+
+<a href="{% url 'select_booking' booking.id %}" class="btn btn-success btn-sm">
+Approved
+</a>
+
+{% endif %}
+
 {% if booking.status == "Pending" %}
 
-<!-- Approve Button -->
 <form action="{% url 'approve_booking' booking.id %}" method="POST" style="display:inline;">
 {% csrf_token %}
-<button class="btn btn-sm btn-success">
+<button class="btn btn-success btn-sm">
 Approve
 </button>
 </form>
 
-<!-- Reject Button -->
 <form action="{% url 'reject_booking' booking.id %}" method="POST" style="display:inline;">
 {% csrf_token %}
-<button class="btn btn-sm btn-warning">
+<button class="btn btn-warning btn-sm">
 Reject
 </button>
 </form>
 
 {% endif %}
 
-<!-- Delete Button -->
 <form action="{% url 'delete_booking' booking.id %}" method="POST" style="display:inline;">
 {% csrf_token %}
-<button class="btn btn-sm btn-danger"
-onclick="return confirm('Delete this booking?')">
+<button class="btn btn-danger btn-sm" onclick="return confirm('Delete booking?')">
 Delete
 </button>
 </form>
@@ -94,9 +99,7 @@ Delete
 {% empty %}
 
 <tr>
-<td colspan="7" class="text-center">
-No bookings found
-</td>
+<td colspan="7" class="text-center">No bookings found</td>
 </tr>
 
 {% endfor %}
@@ -105,47 +108,62 @@ No bookings found
 
 </table>
 
-</div>
 
+<!-- Payment Section -->
+
+<div class="row justify-content-center mt-5">
 
 <div class="col-md-6">
+
 <div class="card shadow p-4 text-center">
 
-<img src="{% static 'images/esewa logo.jpg' %}" width="60" class="mb-3">
+<img src="{% static 'images/esewa logo.jpg' %}" width="80">
 
-<h4 class="mb-3">
-Total Amount: <b>Rs.
-<span id="totalAmountText">{{ total_amount|default:0 }}</span>
-</b>
+<h4 class="mt-3">
+Total Amount :  
+<b>Rs {{ total_amount }}</b>
 </h4>
 
 <form action="https://rc-epay.esewa.com.np/api/epay/main/v2/form" method="POST">
 
 <input type="hidden" name="amount" value="{{ total_amount }}">
+
 <input type="hidden" name="tax_amount" value="0">
+
 <input type="hidden" name="total_amount" value="{{ total_amount }}">
+
 <input type="hidden" name="transaction_uuid" value="{{ transaction_uuid }}">
-<input type="hidden" name="product_code" value="{{ product_code }}">
+
+<input type="hidden" name="product_code" value="EPAYTEST">
+
 <input type="hidden" name="product_service_charge" value="0">
+
 <input type="hidden" name="product_delivery_charge" value="0">
 
 <input type="hidden" name="success_url" value="http://127.0.0.1:8000/payments/success/">
+
 <input type="hidden" name="failure_url" value="http://127.0.0.1:8000/payments/failure/">
 
-<input type="hidden" name="signed_field_names" value="{{ signed_field_names }}">
+<input type="hidden" name="signed_field_names" value="total_amount,transaction_uuid,product_code">
+
 <input type="hidden" name="signature" value="{{ signature }}">
 
-<button type="submit" class="btn btn-success w-100">
+<button class="btn btn-success w-100 mt-3">
 💳 Pay with eSewa
 </button>
 
 </form>
 
-<p class="mt-3 text-muted">
-* You will be redirected to eSewa to complete the payment.
+<p class="text-muted mt-3">
+Click approved booking first then pay
 </p>
 
 </div>
+
+</div>
+
+</div>
+
 </div>
 
 {% endblock %}

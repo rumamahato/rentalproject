@@ -122,40 +122,41 @@ def booking_success(request):
 
     bookings = Booking.objects.filter(user=request.user).order_by("-id")
 
-    last_approved = Booking.objects.filter(
-        user=request.user,
-        status="Approved"
-    ).order_by("-id").first()
+    selected_booking_id = request.session.get("selected_booking")
 
-    if last_approved:
-        total_amount = last_approved.total_price
-    else:
-        total_amount = 0
+    total_amount = 0
+    booking = None
+
+    if selected_booking_id:
+        booking = Booking.objects.filter(id=selected_booking_id, user=request.user).first()
+
+        if booking:
+            total_amount = float(booking.total_price)
 
     transaction_uuid = str(uuid.uuid4())
+
     product_code = "EPAYTEST"
-
-    signed_field_names = "total_amount,transaction_uuid,product_code"
-
-    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
 
     secret_key = "8gBm/:&EnhH.1/q"
 
+    message = f"total_amount={total_amount},transaction_uuid={transaction_uuid},product_code={product_code}"
+
     signature = base64.b64encode(
-        hmac.new(secret_key.encode(), message.encode(), hashlib.sha256).digest()
+        hmac.new(
+            secret_key.encode(),
+            message.encode(),
+            hashlib.sha256
+        ).digest()
     ).decode()
 
     context = {
         "bookings": bookings,
         "total_amount": total_amount,
         "transaction_uuid": transaction_uuid,
-        "product_code": product_code,
-        "signed_field_names": signed_field_names,
         "signature": signature,
     }
 
     return render(request, "rentalapp/booking_success.html", context)
-
 
 # --------------------------
 # Delete Booking
@@ -178,6 +179,7 @@ def approve_booking(request, id):
     if request.method == "POST":
         booking.status = "Approved"
         booking.save()
+
         messages.success(request, "Booking Approved ✅")
 
     return redirect("booking_success")
@@ -193,7 +195,21 @@ def reject_booking(request, id):
     if request.method == "POST":
         booking.status = "Cancelled"
         booking.save()
+
         messages.error(request, "Booking Rejected ❌")
+
+    return redirect("booking_success")
+
+
+# --------------------------
+# Select Booking (Approved)
+# --------------------------
+@login_required
+def select_booking(request, id):
+
+    booking = get_object_or_404(Booking, id=id, user=request.user)
+
+    request.session["selected_booking"] = booking.id
 
     return redirect("booking_success")
 
